@@ -1,0 +1,6 @@
+bin/
+obj/
+results/*.dmp
+results/*.pid
+results/*.signal
+results/*.evt.txt
