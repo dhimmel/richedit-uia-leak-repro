@@ -1,6 +1,6 @@
 # RichEdit gets slower with every edit after a UI Automation client touches it
 
-Standalone reproduction of a leak in `msftedit.dll` (the Windows RichEdit control) on Windows 11.
+Standalone reproduction of a leak in `msftedit.dll` (the Windows RichEdit control) on Windows 11. Reported at [dotnet/winforms#15367](https://github.com/dotnet/winforms/issues/15367).
 
 Once any UI Automation client has read a property from a RichEdit control, msftedit keeps one text-range object for every subsequent change notification and never frees them. Each later edit walks the whole list, so the cost of an edit grows in proportion to the number of edits made since the touch. The client exiting does not stop it. GC does not help (the objects are native). Only restarting the process resets it.
 
