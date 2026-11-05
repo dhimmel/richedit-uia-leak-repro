@@ -4,7 +4,7 @@ Standalone reproduction of a leak in `msftedit.dll` (the Windows RichEdit contro
 
 Once any UI Automation client has read a property from a RichEdit control, msftedit keeps one text-range object for every subsequent change notification and never frees them. Each later edit walks the whole list, so the cost of an edit grows in proportion to the number of edits made since the touch. The client exiting does not stop it. GC does not help (the objects are native). Only restarting the process resets it.
 
-Reproduced on Windows 11 builds 26100 and 26300, `msftedit.dll` 10.0.26100.8117 and 10.0.26100.9711, x64. Not run on Windows 10.
+Reproduced on Windows 11 builds 26100 and 26300, `msftedit.dll` 10.0.26100.9711, x64. Not run on Windows 10.
 
 ## Reproduce
 
@@ -83,6 +83,7 @@ From Microsoft's public symbols for `msftedit.dll`:
 ## Notes
 
 - The app routes `WM_GETOBJECT(UiaRootObjectId)` to the native window procedure, as .NET Framework WinForms does, so msftedit's own provider answers. `--managed-uia` lets .NET 10 WinForms handle it instead; the result is identical, because `RichTextBox` has no managed UIA provider and the request reaches msftedit either way. The bug is below WinForms.
+- Version check: `msftedit.dll` reports 10.0.26100.9711 in `dump-and-count.ps1` output and in `FileVersionRaw`; the version *string* in the file properties still reads 10.0.26100.8117, so compare binary versions.
 - After the single touch in variant b the control receives no further `WM_GETOBJECT` requests, yet the cost keeps climbing. The state is per process and permanent.
 - The variant d client's event handler never runs (PowerShell scriptblock on a non-runspace thread), but the subscription is registered server-side (`uiaRoot` requests climb while subscribed), which is what matters for the provider.
 
